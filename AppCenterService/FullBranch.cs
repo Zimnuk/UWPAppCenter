@@ -5,7 +5,7 @@ namespace AppCenterService;
 public record FullBranch
 {
     [JsonPropertyName("branch")]
-    public BranchInfo Branch { get; init; }
+    public BranchInfo Info { get; init; }
     [JsonPropertyName("configured")]
     public bool Configured { get; init; }
     [JsonPropertyName("lastBuild")]

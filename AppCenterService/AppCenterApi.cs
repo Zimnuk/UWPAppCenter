@@ -17,37 +17,49 @@ public class AppCenterApi
         AppName = Environment.GetEnvironmentVariable("AppName");
         Token = Environment.GetEnvironmentVariable("Token");
     }
-    public List<FullBranch> GetBranches()
+    public async Task<List<FullBranch>> GetBranches()
     {
         var url = new Url(_baseApi).AppendPathSegment(Author).AppendPathSegment(AppName)
             .AppendPathSegment("branches");
-        var json = GetRequest(url);
+        var json = await GetRequest(url);
         var result = JsonSerializer.Deserialize<List<FullBranch>>(json);
         return result;
     }
 
-    public bool BuildBranch(string branch)
+    public async Task BuildAllBranches(List<BranchInfo> branches)
     {
-        var branches = GetBranches();
-        if (!branches.Select(q=>q.Branch.Name).Contains(branch))
+        foreach (var branch in branches)
         {
-            throw new Exception("incorrect branch name");
+            await BuildConcreteBranch(branch);
         }
-
-        var lastCommit = branches.First(q => q.Branch.Name == branch).Branch.Commit.Sha;
-        var url = new Url().AppendPathSegment(Author).AppendPathSegment(AppName).AppendPathSegment("branches")
-            .AppendPathSegment(branch).AppendPathSegment("builds");
-        var body = new BuildParameters(lastCommit, false);
-        PostRequest(url, body);
-        return true;
     }
-    private string GetRequest(string url)
+    
+
+    public async Task BuildConcreteBranch(BranchInfo branch)
+    {
+        var lastCommit = branch.Commit.Sha;
+        var url = new Url(_baseApi).AppendPathSegment(Author).AppendPathSegment(AppName).AppendPathSegment("branches")
+            .AppendPathSegment(branch.Name).AppendPathSegment("builds");
+        var body = new BuildParameters(lastCommit, false);
+        try
+        {
+            Console.WriteLine($"{branch.Name} has been sent for building");
+            var branchBuild = await PostRequest(url, body);
+            Console.WriteLine($"Branch {branch.Name} successfully build");
+            
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Branch {branch.Name} didn't build");
+        }
+    }
+    private async Task<string> GetRequest(string url)
     {
         var request = WebRequest.Create(url) as HttpWebRequest;
         request.Accept = "application/json";
         request.Method = "GET";
         request.Headers.Add($"X-API-Token: {Token}");
-        var response = (HttpWebResponse)request.GetResponse();
+        var response = request.GetResponse();
         string result;
         using (var reader = new StreamReader(response.GetResponseStream()))
         {
@@ -57,7 +69,7 @@ public class AppCenterApi
         return result;
     }
 
-    private string PostRequest(string apiRequest, object body)
+    private async Task<string> PostRequest(string apiRequest, object body)
     {
         var request = WebRequest.Create(apiRequest) as HttpWebRequest;
         request.ContentType = "application/json";
@@ -69,8 +81,7 @@ public class AppCenterApi
             var bodyJson = JsonSerializer.Serialize(body);
             streamWriter.Write(bodyJson);
         }
-
-        var response = (HttpWebResponse)request.GetResponse();
+        var response = await request.GetResponseAsync();
         string result;
         using (var reader = new StreamReader(response.GetResponseStream()))
         {

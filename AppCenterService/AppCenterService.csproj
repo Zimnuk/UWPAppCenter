@@ -6,4 +6,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Flurl">
+        <Version>3.0.6</Version>
+      </PackageReference>
+    </ItemGroup>
+
 </Project>
