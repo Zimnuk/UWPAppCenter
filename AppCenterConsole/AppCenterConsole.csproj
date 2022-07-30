@@ -7,4 +7,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Flurl">
+      <Version>3.0.6</Version>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppCenterService\AppCenterService.csproj" />
+  </ItemGroup>
+
 </Project>
