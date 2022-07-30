@@ -58,6 +58,12 @@ public class ActionHelper
         {
             _api.BuildConcreteBranch(_currentBranches[result]);
         }
+        else
+        {
+            Console.WriteLine("Incorrect instruction! Let's try one more time");
+            action = Console.ReadLine();
+            ActionChoose(action);
+        }
 
     }
     private async Task BuildAllBranches()
