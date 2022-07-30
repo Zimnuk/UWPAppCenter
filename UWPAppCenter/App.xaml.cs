@@ -14,6 +14,9 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
 
 namespace UWPAppCenter
 {
@@ -28,6 +31,9 @@ namespace UWPAppCenter
         /// </summary>
         public App()
         {
+            var secret = Environment.GetEnvironmentVariable("secret");
+            if (!string.IsNullOrEmpty(secret))
+                AppCenter.Start(secret, typeof(Analytics), typeof(Crashes));
             this.InitializeComponent();
             this.Suspending += OnSuspending;
         }
