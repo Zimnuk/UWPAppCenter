@@ -1,7 +1,14 @@
-﻿using AppCenterService;
+﻿
 
-namespace AppCenterConsole;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AppCenterService;
 
+namespace AppCenterConsole
+{
+    
 public class ActionHelper
 {
     private readonly AppCenterApi _api;
@@ -57,5 +64,7 @@ public class ActionHelper
     {
         Console.WriteLine("Building of all branches");
         await _api.BuildAllBranches(_currentBranches.Select(q=>q.Value).ToList());
+        
     }
+}
 }

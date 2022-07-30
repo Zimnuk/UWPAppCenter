@@ -1,10 +1,16 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AppCenterService;
 using Flurl;
 
-namespace AppCenterConsole;
-
+namespace AppCenterConsole
+{
+    
 public class AppCenterApi
 {
     private string _baseApi = "https://api.appcenter.ms/v0.1/apps";
@@ -26,12 +32,11 @@ public class AppCenterApi
         return result;
     }
 
-    public async Task BuildAllBranches(List<BranchInfo> branches)
+    public async Task BuildAllBranches(IEnumerable<BranchInfo> branches)
     {
-        foreach (var branch in branches)
-        {
-            await BuildConcreteBranch(branch);
-        }
+        var tasks = branches.Select(BuildConcreteBranch).ToList();
+
+        Task.WhenAll(tasks);
     }
     
 
@@ -40,12 +45,14 @@ public class AppCenterApi
         var lastCommit = branch.Commit.Sha;
         var url = new Url(_baseApi).AppendPathSegment(Author).AppendPathSegment(AppName).AppendPathSegment("branches")
             .AppendPathSegment(branch.Name).AppendPathSegment("builds");
-        var body = new BuildParameters(lastCommit, false);
+        var body = new BuildParameters(lastCommit, true);
         try
         {
             Console.WriteLine($"{branch.Name} has been sent for building");
             var branchBuild = await PostRequest(url, body);
-            Console.WriteLine($"Branch {branch.Name} successfully build");
+            var build = JsonSerializer.Deserialize<Build>(branchBuild);
+            var time = DateTime.Parse(build.StartTime) - DateTime.Parse(build.FinishTime);
+            Console.WriteLine($"{branch.Name} build completed in {time.Seconds}");
             
         }
         catch (Exception e)
@@ -91,4 +98,5 @@ public class AppCenterApi
         response.Close();
         return result;
     }
+}    
 }
