@@ -1,2 +1,13 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿
+using AppCenterConsole;
+
 Console.WriteLine("Hello, World!");
+var helper = new ActionHelper();
+helper.GetBranches();
+var action = Console.ReadLine();
+helper.ActionChoose(action);
+Console.ReadKey();
+
+
+
+
