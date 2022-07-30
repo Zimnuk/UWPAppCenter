@@ -39,7 +39,6 @@ public class AppCenterApi
         Task.WhenAll(tasks);
     }
     
-
     public async Task BuildConcreteBranch(BranchInfo branch)
     {
         var lastCommit = branch.Commit.Sha;
@@ -51,15 +50,39 @@ public class AppCenterApi
             Console.WriteLine($"{branch.Name} has been sent for building");
             var branchBuild = await PostRequest(url, body);
             var build = JsonSerializer.Deserialize<Build>(branchBuild);
-            var time = DateTime.Parse(build.StartTime) - DateTime.Parse(build.FinishTime);
-            Console.WriteLine($"{branch.Name} build completed in {time.Seconds}");
-            
+            var result = await WaitBuildResult(branch, build);
+            var time = DateTime.Parse(result.FinishTime) - DateTime.Parse(result.StartTime);
+            var logLink = new Url(_baseApi).AppendPathSegment(Author).AppendPathSegment(AppName)
+                .AppendPathSegment("builds").AppendPathSegment(result.Id).AppendPathSegment("logs");
+            Console.WriteLine($"{branch.Name} build {result.Result} in {time.Seconds} seconds. Link to build logs: {logLink}");
         }
         catch (Exception e)
         {
             Console.WriteLine($"Branch {branch.Name} didn't build");
         }
     }
+
+    private async Task<Build> WaitBuildResult(BranchInfo branch, Build build)
+    {
+        
+        while (build.Status != "completed")
+        {
+            Task.Delay(20 * 1000);
+            var builds = await GetBuilds(branch);
+            build = builds.First(q => q.Id == build.Id);
+        };
+        return build;
+    }
+
+    private async Task<List<Build>> GetBuilds(BranchInfo branch)
+    {
+        var url = new Url(_baseApi).AppendPathSegment(Author).AppendPathSegment(AppName).AppendPathSegment("branches")
+            .AppendPathSegment(branch.Name).AppendPathSegment("builds");
+        var json = await GetRequest(url);
+        return JsonSerializer.Deserialize<List<Build>>(json);
+    }
+
+
     private async Task<string> GetRequest(string url)
     {
         var request = WebRequest.Create(url) as HttpWebRequest;
